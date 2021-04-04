@@ -1,191 +1,214 @@
-import 'package:flutter/cupertino.dart';
+import 'package:connectivity/connectivity.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:riderapp/Views/login.dart';
 import 'package:riderapp/sizes_helpers.dart';
 import 'package:riderapp/components/constants.dart';
-import 'package:riderapp/components/tracking_text_input.dart';
 import 'package:riderapp/components/rounded_button.dart';
-import 'login.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class Signup extends StatefulWidget {
   static const String id = 'signup_screen';
+
   @override
   _SignupState createState() => _SignupState();
 }
 
 class _SignupState extends State<Signup> {
-  String email;
-  String password;
+  final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
+
+  void showSnackBar(String message) {
+    final snackBar = SnackBar(
+        content: Text(
+      message,
+      textAlign: TextAlign.center,
+    ));
+    scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  var nameController = TextEditingController();
+
+  var emailController = TextEditingController();
+
+  var phoneController = TextEditingController();
+
+  var passwordController = TextEditingController();
+
+  void registerUser() async {
+    final User user = (await _auth
+            .createUserWithEmailAndPassword(
+                email: emailController.text, password: passwordController.text)
+            .catchError((ex) {
+      PlatformException thisEx = ex;
+      showSnackBar(thisEx.message);
+    }))
+        .user;
+    if (user != null) {
+      print('success');
+      DatabaseReference newUserRef =
+          FirebaseDatabase.instance.reference().child('users/${user.uid}');
+      Map userMap = {
+        'name': nameController.text,
+        'email': emailController.text,
+        'phone': phoneController.text,
+      };
+      newUserRef.set(userMap);
+      Navigator.pushNamedAndRemoveUntil(context, Login.id, (route) => false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-
-      body: Column(
-        children: [
-          Container(
-            height: displayHeight(context)*0.28,
-            width: double.infinity,
-            //color: splashTextColor,
-            decoration: BoxDecoration(
-                color: splashTextColor,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                )
-            ),
-            child: Column(
-              children: [
-                SizedBox(
-                  height: displayHeight(context)*0.04,
-                ),
-                Row(
+      key: scaffoldKey,
+      body: SingleChildScrollView(
+        //physics: NeverScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: [
+              SizedBox(
+                height: displayHeight(context) * 0.15,
+              ),
+              Image(
+                alignment: Alignment.center,
+                height: 100,
+                width: 100,
+                image: AssetImage('images/OriginalonTransparentLogo.png'),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Text(
+                "SELECT TRANSPORTATION",
+                style: TextStyle(
+                    color: splashTextColor,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600),
+              ),
+              SizedBox(
+                height: 40,
+              ),
+              Text(
+                "Sign up as a Rider",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
                   children: [
-                    Container(
-
-                      width: 60,
-                      child: InkWell(
-                        child: Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                        ),
-                        onTap: (){
-                          Navigator.pushReplacement(
-                              context, MaterialPageRoute(builder: (BuildContext context) => Login()));
-                        },
-                      ),
+                    //name
+                    TextField(
+                      controller: nameController,
+                      keyboardType: TextInputType.name,
+                      decoration: InputDecoration(
+                          labelText: 'Full name',
+                          labelStyle: TextStyle(fontSize: 14),
+                          hintStyle:
+                              TextStyle(color: Colors.grey, fontSize: 10)),
+                      style: TextStyle(fontSize: 14),
                     ),
+                    SizedBox(
+                      height: 10,
+                    ),
+
+                    //email
+                    TextField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                          labelText: 'Email address',
+                          labelStyle: TextStyle(fontSize: 14),
+                          hintStyle:
+                              TextStyle(color: Colors.grey, fontSize: 10)),
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+
+                    //phone
+                    TextField(
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                          labelText: 'Phone',
+                          labelStyle: TextStyle(fontSize: 14),
+                          hintStyle:
+                              TextStyle(color: Colors.grey, fontSize: 10)),
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+
+                    //password
+                    TextField(
+                      controller: passwordController,
+                      obscureText: true,
+                      keyboardType: TextInputType.visiblePassword,
+                      decoration: InputDecoration(
+                          labelText: 'Password',
+                          labelStyle: TextStyle(fontSize: 14),
+                          hintStyle:
+                              TextStyle(color: Colors.grey, fontSize: 10)),
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+
+                    RoundedButton(
+                      buttonColor: splashTextColor,
+                      textColor: Colors.white,
+                      title: 'Sign up',
+                      buttonWidth: displayWidth(context) * 0.80,
+                      onPressed: () async {
+                        var connectivityResult =
+                            await Connectivity().checkConnectivity();
+                        if (connectivityResult != ConnectivityResult.mobile &&
+                            connectivityResult != ConnectivityResult.wifi) {
+                          showSnackBar('No internet');
+                          return;
+                        }
+
+                        if (nameController.text.length < 3) {
+                          showSnackBar('Enter valid name');
+                          return;
+                        }
+                        if (phoneController.text.length < 10) {
+                          showSnackBar('Enter valid phone number');
+                          return;
+                        }
+                        if (passwordController.text.length < 8) {
+                          showSnackBar('Enter valid password');
+                          return;
+                        }
+                        if (!emailController.text.contains('@')) {
+                          showSnackBar('Enter valid email');
+                          return;
+                        }
+
+                        registerUser();
+                      },
+                    )
                   ],
                 ),
-                SizedBox(
-                  height: displayHeight(context)*0.02,
-                ),
-                Text(
-                  "SignUp",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 40
-                  ),
-                ),
-                SizedBox(height: 30,),
-
-                Text(
-                  "SELECT TRANSPORTATION",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20
-                  ),
-                ),
-                Text(
-
-                  "We provide all your transportaion needs",
-                  style: TextStyle(color: Colors.white, fontSize: 14),
-                )
-
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 15.0),
-            child: Text("Create a new account", style: TextStyle(
-              color: Colors.black87,
-              fontSize: 18
-            ),),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
-            child: Container(
-              height: displayHeight(context)*0.07,
-              width: displayWidth(context)*0.8,
-
-              decoration: BoxDecoration(
-                  border: Border.all(
-                      color: Colors.grey,
-                      width: 2
-                  ),
-                  borderRadius: BorderRadius.circular(20)
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 60,
-                    child: Icon(
-                      Icons.email,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  Expanded(
-                    child: TrackingTextInput(
-
-                      hint: "Enter Email",
-                      colour: Colors.grey,
-                      onTextChanged: (String value) {
-                        email = value;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-
-
-
-
-            ),
+              FlatButton(
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, Login.id, (route) => false);
+                },
+                child: Text("Already have an account, Login here"),
+              )
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 15, left: 20, right: 20),
-            child: Container(
-              height: displayHeight(context)*0.07,
-              width: displayWidth(context)*0.8,
-
-              decoration: BoxDecoration(
-                  border: Border.all(
-                      color: Colors.grey,
-                      width: 2
-                  ),
-                  borderRadius: BorderRadius.circular(20)
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 60,
-                    child: Icon(
-                      Icons.vpn_key,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  Expanded(
-                    child: TrackingTextInput(
-
-                      hint: "Enter Password",
-                      colour: Colors.grey,
-                      onTextChanged: (String value) {
-                        email = value;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-
-
-
-
-            ),
-          ),
-          RoundedButton(
-            title: 'SignUp',
-            textColor: Colors.white,
-            buttonColor: Colors.deepOrange,
-            buttonHeight: 30,
-            buttonWidth: displayWidth(context)*0.4,
-            onPressed: (){
-             // Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => Login()));
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
