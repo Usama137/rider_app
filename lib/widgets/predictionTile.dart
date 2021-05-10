@@ -9,15 +9,22 @@ import 'package:riderapp/dataModels/prediction.dart';
 import 'package:riderapp/dataProvider/appData.dart';
 import 'package:riderapp/globalVariables.dart';
 import 'package:riderapp/helpers/requestHelper.dart';
+import 'package:riderapp/widgets/ProgressDialog.dart';
 
 class PredictionTile extends StatelessWidget {
   final Prediction prediction;
   PredictionTile({this.prediction});
 
   void getPLaceDetails(String placeId, context) async {
+
+
+
+
     String url =
         'https://maps.googleapis.com/maps/api/place/details/json?placeid=$placeId&key=$mapKey';
     var response = await RequestHelper.getRequest(url);
+
+   // Navigator.pop(context);
 
     if (response == 'failed') {
       return;
@@ -32,6 +39,7 @@ class PredictionTile extends StatelessWidget {
       Provider.of<AppData>(context, listen: false)
           .updateDestinationAddress(thisPlace);
       print(thisPlace.placeName);
+      Navigator.pop(context,'getDirection');
     }
   }
 

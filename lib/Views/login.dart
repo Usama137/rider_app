@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:riderapp/Views/signup.dart';
 import 'package:riderapp/components/constants.dart';
 import 'package:riderapp/components/rounded_button.dart';
 import 'package:riderapp/sizes_helpers.dart';
 import 'package:riderapp/Views/home.dart';
+import 'package:riderapp/widgets/ProgressDialog.dart';
 
 class Login extends StatefulWidget {
   static const String id = 'login_screen';
@@ -32,20 +34,35 @@ class _LoginState extends State<Login> {
   }
 
   void login() async {
+    
+    showDialog(
+      barrierDismissible: false,
+        context: context,
+        builder: (BuildContext context)=>ProgressDialog(status: "Logging you in")
+    );
     try {
+
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text,
         password: passwordController.text,
       );
       if (userCredential != null) {
+
+       // DatabaseReference userRef=FirebaseDatabase.instance.reference().child('drivers/${user.uid}');
+
+
+        Navigator.pop(context);
         Navigator.pushNamed(context, Home.id);
       }
     } on FirebaseAuthException catch (e) {
+      Navigator.pop(context);
       if (e.code == 'user-not-found') {
         print('No user found for that email.');
+        showSnackBar(e.message);
       } else if (e.code == 'wrong-password') {
         print('Wrong password provided for that user.');
+        showSnackBar(e.message);
       }
     }
   }

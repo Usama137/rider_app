@@ -37,6 +37,8 @@ dependencies:
   provider: ^5.0.0
   progress_dialog: ^1.2.4
   firebase_database: ^6.0.0
+  flutter_polyline_points: ^0.2.3
+  font_awesome_flutter: ^9.0.0
 
 
 

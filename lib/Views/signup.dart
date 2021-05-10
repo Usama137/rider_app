@@ -7,6 +7,7 @@ import 'package:riderapp/sizes_helpers.dart';
 import 'package:riderapp/components/constants.dart';
 import 'package:riderapp/components/rounded_button.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:riderapp/widgets/ProgressDialog.dart';
 
 class Signup extends StatefulWidget {
   static const String id = 'signup_screen';
@@ -38,10 +39,17 @@ class _SignupState extends State<Signup> {
   var passwordController = TextEditingController();
 
   void registerUser() async {
+
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (BuildContext context)=>ProgressDialog(status: "Signing Up"));
+
     final User user = (await _auth
             .createUserWithEmailAndPassword(
                 email: emailController.text, password: passwordController.text)
             .catchError((ex) {
+              Navigator.pop(context);
       PlatformException thisEx = ex;
       showSnackBar(thisEx.message);
     }))
@@ -55,6 +63,7 @@ class _SignupState extends State<Signup> {
         'email': emailController.text,
         'phone': phoneController.text,
       };
+      print(nameController.text);
       newUserRef.set(userMap);
       Navigator.pushNamedAndRemoveUntil(context, Login.id, (route) => false);
     }
