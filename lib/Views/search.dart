@@ -56,7 +56,7 @@ class _SearchState extends State<Search> {
   Widget build(BuildContext context) {
     setFocus();
 
-    String address = Provider.of<AppData>(context).pickupAddress.placeName;
+    String address = Provider.of<AppData>(context).pickupAddress?.placeName;
     pickUpController.text = address;
 
     return Scaffold(

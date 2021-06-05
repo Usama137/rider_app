@@ -2,11 +2,14 @@
 
 import 'dart:math';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:riderapp/dataModels/address.dart';
 import 'package:riderapp/dataModels/directionDetails.dart';
+import 'package:riderapp/dataModels/user.dart';
 import 'package:riderapp/dataProvider/appData.dart';
 import 'package:riderapp/globalVariables.dart';
 import 'package:riderapp/helpers/requestHelper.dart';
@@ -14,6 +17,20 @@ import 'package:provider/provider.dart';
 
 
 class HelperMethods{
+
+
+  static void getCurrentUserInfo()async{
+    currentFirebaseUser=await FirebaseAuth.instance.currentUser;
+    String userid=currentFirebaseUser.uid;
+    DatabaseReference userRef=FirebaseDatabase.instance.reference().child('users/$userid');
+    
+    userRef.once().then((DataSnapshot snapshot) {
+      if(snapshot.value!=null){
+         currentUserInfo=UserFire.fromSnapshot(snapshot);
+        print("my name is ${currentUserInfo.fullName}");
+      }
+    });
+  }
 
   static Future<String> findCoordinateAddress(Position position, context)async{
     String placeAddress='';
@@ -75,5 +92,11 @@ class HelperMethods{
 
   }
 
+
+  static double generateRandomNumber (int max){
+    var randomGenerator=Random();
+    int radInt=randomGenerator.nextInt(max);
+    return radInt.toDouble();
+  }
 
 }
